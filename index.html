@@ -99,6 +99,18 @@ function answer(v){
  if(s.k==='now'&&v==='Water leaking')setTimeout(()=>add("If it's safe, turn off the stop tap (often under the kitchen sink) and switch off electrics near the water.",'bot'),250);
  setTimeout(ask,500);
 }
+function post(fields,blob,name){return new Promise(ok=>{
+ const id='f'+Math.random().toString(36).slice(2),ifr=document.createElement('iframe'),f=document.createElement('form');
+ ifr.name=id;ifr.style.display='none';f.style.display='none';
+ f.method='POST';f.enctype='multipart/form-data';f.target=id;f.action='https://formsubmit.co/info@mtexservices.co.uk';
+ const h=(k,v)=>{const i=document.createElement('input');i.type='hidden';i.name=k;i.value=v;f.appendChild(i)};
+ h('_captcha','false');h('_template','table');
+ Object.keys(fields).forEach(k=>h(k,fields[k]));
+ const i=document.createElement('input');i.type='file';i.name='attachment';
+ const dt=new DataTransfer();dt.items.add(new File([blob],name,{type:'image/jpeg'}));i.files=dt.files;f.appendChild(i);
+ document.body.append(ifr,f);
+ let c=0;ifr.onload=()=>{if(++c>=2)ok()};
+ f.submit();setTimeout(ok,12000)})}
 function shrink(file){return new Promise(ok=>{
  const img=new Image(),u=URL.createObjectURL(file);
  img.onload=()=>{const k=Math.min(1,1280/Math.max(img.width,img.height)),c=document.createElement('canvas');
@@ -133,17 +145,21 @@ function summary(){
    fd.append('_captcha','false');fd.append('_template','table');
    rows.forEach(r=>fd.append(r[0],r[1]));
    if(D.photoNote)fd.append('Photo note',D.photoNote);
-   for(let n=0;n<D.photos.length;n++){const b=await shrink(D.photos[n]);fd.append('attachment',b,'photo'+(n+1)+'.jpg')}
+   
    const res=await fetch('https://formsubmit.co/ajax/info@mtexservices.co.uk',{method:'POST',body:fd,headers:{Accept:'application/json'}});
    const j=await res.json();
    if(!res.ok||j.success===false||j.success==='false')throw new Error('fail');
+   send.textContent='Sending photos…';
+   for(let n=0;n<D.photos.length;n++){const b=await shrink(D.photos[n]);await post({_subject:'Photo '+(n+1)+' of '+D.photos.length+' – '+D.name+' – '+D.service,Name:D.name,Phone:D.phone,Note:'Photo for the enquiry sent just now'},b,'photo'+(n+1)+'.jpg')}
    send.textContent='Sent ✓';
    add("Sent! We've received your enquiry"+(D.photos.length?" and photos":"")+" and will be in touch."+(em&&PHONE?" For an emergency, please also tap Call us now.":""),'bot');
   }catch(x){send.disabled=false;send.textContent='Try again';add("Sorry, that didn't send. Tap Try again, or use Email instead (and attach your photos).",'bot warn')}
  };
- row.append(send,e,cp,rs);c.appendChild(row);log.appendChild(c);log.scrollTop=log.scrollHeight;
+ const wa=document.createElement('a');wa.className='btn alt';wa.textContent='WhatsApp us';
+ wa.href='https://wa.me/447771881660?text='+encodeURIComponent(text);wa.target='_blank';wa.rel='noopener';
+ row.append(send,wa,e,cp,rs);c.appendChild(row);log.appendChild(c);log.scrollTop=log.scrollHeight;
  if(em)add(PHONE?"This is an emergency — tap Call us now so we can respond straight away.":"For emergencies please also phone us — emails may not be seen straight away.",'bot');
- add("Tap Send to MTEX to send your report"+(D.photos.length?" and photos":"")+" to us.",'bot');
+ add("Tap Send to MTEX to send your report"+(D.photos.length?" and photos":"")+" to us. Or tap WhatsApp us and add your photos in the chat.",'bot');
  t.disabled=true;
 }
 
