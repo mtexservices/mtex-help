@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MTEX Services Ltd</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f7fa;--card:#fff;--ink:#16202a;--mut:#6b7885;--pri:#0b6bcb;--onpri:#fff;--bot:#e6edf5;--line:#d8e0e8;--warn:#fdecea;--warnink:#a12318}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f151b;--card:#18212a;--ink:#e8eef4;--mut:#93a1af;--pri:#4a9df0;--onpri:#08121c;--bot:#212d38;--line:#2b3946;--warn:#3a1d1a;--warnink:#ffb4a9}}
+:root[data-theme="dark"]{--bg:#0f151b;--card:#18212a;--ink:#e8eef4;--mut:#93a1af;--pri:#4a9df0;--onpri:#08121c;--bot:#212d38;--line:#2b3946;--warn:#3a1d1a;--warnink:#ffb4a9}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;justify-content:center}
+.app{display:flex;flex-direction:column;width:100%;max-width:560px;height:100%;background:var(--card)}
+header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center}
+header b{display:block}header span{font-size:13px;color:var(--mut)}
+.logo{font-size:26px}
+#log{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.m{max-width:85%;padding:10px 13px;border-radius:16px;white-space:pre-wrap;word-wrap:break-word}
+.bot{background:var(--bot);align-self:flex-start;border-bottom-left-radius:4px}
+.me{background:var(--pri);color:var(--onpri);align-self:flex-end;border-bottom-right-radius:4px}
+.warn{background:var(--warn);color:var(--warnink);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-self:flex-start}
+.chip{border:1.5px solid var(--pri);background:var(--card);color:var(--pri);padding:8px 14px;border-radius:20px;font:inherit;cursor:pointer}
+.chip:active{background:var(--pri);color:var(--onpri)}
+.thumbs{display:flex;flex-wrap:wrap;gap:6px;align-self:flex-end;max-width:85%;justify-content:flex-end}
+.thumbs img{width:84px;height:84px;object-fit:cover;border-radius:10px}
+.sum{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;align-self:stretch}
+.sum h3{margin:0 0 8px}.sum dl{margin:0;display:grid;grid-template-columns:120px 1fr;gap:4px 8px;font-size:14px}
+.sum dt{color:var(--mut)}.sum dd{margin:0}
+.sum .row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn{background:var(--pri);color:var(--onpri);border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:600;text-decoration:none;cursor:pointer}
+.btn.alt{background:transparent;color:var(--pri);border:1.5px solid var(--pri)}
+footer{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);align-items:center;background:var(--card)}
+#t{flex:1;min-width:0;padding:11px 14px;border-radius:22px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.ib{width:42px;height:42px;border-radius:50%;border:0;background:var(--bot);color:var(--ink);font-size:19px;cursor:pointer;flex:none}
+.ib.go{background:var(--pri);color:var(--onpri)}
+</style></head>
+<body><div class="app">
+<header><div class="logo">🔧</div><div><b>MTEX Services Ltd</b><span>Plumbing, heating, boilers, heat pumps &amp; bathrooms</span></div></header>
+<div id="log" aria-live="polite"></div>
+<footer>
+<button class="ib" id="cam" title="Add photos" aria-label="Add photos">📷</button>
+<input id="f" type="file" accept="image/*" multiple hidden>
+<input id="t" type="text" placeholder="Type your answer…" autocomplete="off">
+<button class="ib go" id="send" aria-label="Send">➤</button>
+</footer></div>
+<script>
+const log=document.getElementById('log'),t=document.getElementById('t'),f=document.getElementById('f');
+const PHONE='07771881660';
+const D={photos:[]};let i=0,chipsEl=null;
+const S=n=>D=>D.service===n,Q=n=>D=>D.req===n;
+const J={'Plumbing':['Leak / burst pipe','Blocked drain or toilet','No hot water','Tap, toilet or valve repair','Something else'],
+'Heating':['No heating','Radiators cold or uneven','Noisy system or pipes','New radiators / underfloor','Something else'],
+'Boilers':['Boiler not working','Leaking or error code','Annual service','New boiler','Something else'],
+'Air source heat pump':['New installation','Repair or fault','Service / health check','Is it right for my home?'],
+'Bathroom':['Full new bathroom','Replace suite or shower','Wet room / walk-in shower','Repair or leak','Something else']};
+const steps=[
+{k:'name',q:"Hi! 👋 Welcome to MTEX Services Ltd. What's your name?"},
+{k:'service',q:D=>`Thanks, ${D.name}. Which service do you need?`,o:['Plumbing','Heating','Boilers','Air source heat pump','Bathroom']},
+{k:'req',q:"What are you looking for?",o:['Quote','Emergency call out','Scheduled booked-in work']},
+{k:'job',q:D=>`What do you need help with? (${D.service})`,o:D=>J[D.service]},
+{k:'fuel',if:S('Boilers'),q:"What fuel does the boiler use?",o:['Gas','Oil','LPG','Electric','Not sure']},
+{k:'boiler',if:S('Boilers'),q:"Boiler make, model and age if you know them (or type 'not sure')."},
+{k:'current',if:S('Air source heat pump'),q:"What is your current heating?",o:['Gas boiler','Oil boiler','Electric','Existing heat pump']},
+{k:'prop',if:S('Air source heat pump'),q:"What type of property is it?",o:['House','Bungalow','Flat','Commercial']},
+{k:'design',if:S('Bathroom'),q:"Have you chosen your bathroom products?",o:['Yes','Need help choosing','Not yet']},
+{k:'issue',q:"Please describe the problem or the work in your own words."},
+{k:'now',if:Q('Emergency call out'),q:"What's happening right now?",o:['Water leaking','No heating or hot water','Smell of gas','Something else']},
+{k:'vuln',if:Q('Emergency call out'),q:"Is anyone vulnerable at home (elderly, young children, unwell)?",o:['Yes','No']},
+{k:'when',if:Q('Quote'),q:"When would you like the work done?",o:['As soon as possible','Within a month','1–3 months','Just budgeting']},
+{k:'dates',if:Q('Scheduled booked-in work'),q:"What dates and times suit you? (e.g. weekday mornings, 14 Oct)"},
+{k:'photos',q:D=>D.req==='Quote'?"Photos help us quote accurately. Tap 📷 to add as many as you like, then tap Done.":"Can you upload photos as evidence? Tap 📷 to add as many as you like (leak, damage, boiler display, pipework), then tap Done.",o:['Done','No photos']},
+{k:'phone',q:"What's the best phone number to reach you on?"},
+{k:'email',if:D=>D.req!=='Emergency call out',q:"What's your email address? (for your quote or booking confirmation)"},
+{k:'address',q:"And the property address, including postcode?"}
+];
+const L={name:'Name',service:'Service',req:'Request',job:'Job',fuel:'Fuel',boiler:'Boiler',current:'Current heating',prop:'Property',design:'Products chosen',issue:'Details',now:'Right now',vuln:'Vulnerable person',when:'Wanted',dates:'Preferred times',phone:'Phone',email:'Email',address:'Address'};
+const danger=/smell of gas|gas smell|smell gas|gas leak|carbon monoxide|\bco alarm|sparks/i;
+function add(txt,cls){const d=document.createElement('div');d.className='m '+cls;d.textContent=txt;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+function clearChips(){if(chipsEl){chipsEl.remove();chipsEl=null}}
+function ask(){
+ while(steps[i]&&steps[i].if&&!steps[i].if(D))i++;
+ const s=steps[i];if(!s)return summary();
+ add(typeof s.q==='function'?s.q(D):s.q,'bot');
+ const o=typeof s.o==='function'?s.o(D):s.o;
+ if(o){chipsEl=document.createElement('div');chipsEl.className='chips';
+  o.forEach(x=>{const b=document.createElement('button');b.className='chip';b.textContent=x;b.onclick=()=>answer(x);chipsEl.appendChild(b)});
+  log.appendChild(chipsEl);log.scrollTop=log.scrollHeight}
+ t.placeholder=s.k==='photos'?'Add a note about the photos (optional)':'Type your answer…';
+}
+function check(v){if(danger.test(v))add("⚠️ SAFETY: If you smell gas or a CO alarm is sounding, open doors and windows, don't use switches or flames, leave the property and call the National Gas Emergency Service on 0800 111 999 (free, 24/7). Then come back and we'll continue.",'bot warn')}
+function answer(v){
+ v=(v||'').trim();if(!v)return;clearChips();
+ const s=steps[i];if(!s)return;
+ add(v,'me');check(v);t.value='';
+ if(s.k==='photos'){if(v!=='Done'&&v!=='No photos'){D.photoNote=v;ask_chips();return}}
+ else D[s.k]=v;
+ i++;
+ if(s.k==='req'&&v==='Emergency call out')setTimeout(()=>add("Understood — I'll flag this as an emergency call out. A few quick questions so we can respond fast.",'bot'),250);
+ if(s.k==='now'&&v==='Water leaking')setTimeout(()=>add("If it's safe, turn off the stop tap (often under the kitchen sink) and switch off electrics near the water.",'bot'),250);
+ setTimeout(ask,500);
+}
+function summary(){
+ const em=D.req==='Emergency call out';
+ add("Thank you, "+D.name+"! Here's your report 👇",'bot');
+ const rows=[];
+ Object.keys(L).forEach(k=>{if(k==='phone')rows.push(['Photos',D.photos.length?D.photos.length+' attached':'None']);if(D[k])rows.push([L[k],D[k]])});
+ const text='MTEX SERVICES LTD – ENQUIRY\n'+rows.map(r=>r[0]+': '+r[1]).join('\n')+(D.photoNote?'\nPhoto note: '+D.photoNote:'');
+ const c=document.createElement('div');c.className='sum';
+ const h=document.createElement('h3');h.textContent='Your report';
+ const dl=document.createElement('dl');
+ rows.forEach(r=>{const a=document.createElement('dt'),b=document.createElement('dd');a.textContent=r[0];b.textContent=r[1];dl.append(a,b)});
+ c.append(h,dl);
+ const row=document.createElement('div');row.className='row';
+ if(em&&PHONE){const p=document.createElement('a');p.className='btn';p.textContent='📞 Call us now';p.href='tel:'+PHONE;row.append(p)}
+ const e=document.createElement('a');e.className='btn';e.textContent='Email to us';
+ e.href='mailto:info@mtexservices.co.uk?subject='+encodeURIComponent((em?'EMERGENCY – ':'')+D.service+' – '+D.req+' – '+D.name)+'&body='+encodeURIComponent(text+(D.photos.length?'\n\n(Please attach your photos to this email.)':''));
+ const cp=document.createElement('button');cp.className='btn alt';cp.textContent='Copy';
+ cp.onclick=async()=>{try{await navigator.clipboard.writeText(text);cp.textContent='Copied ✓'}catch(x){cp.textContent='Copy failed'}};
+ const rs=document.createElement('button');rs.className='btn alt';rs.textContent='Start over';rs.onclick=()=>location.reload();
+ row.append(e,cp,rs);c.appendChild(row);log.appendChild(c);log.scrollTop=log.scrollHeight;
+ if(em)add(PHONE?"This is an emergency — tap Call us now so we can respond straight away.":"For emergencies please also phone us — emails may not be seen straight away.",'bot');
+ if(D.photos.length)add("Tip: your photos stay on your device — attach them to the email so the engineer can see them.",'bot');
+ t.disabled=true;
+}
+
+document.getElementById('send').onclick=()=>answer(t.value);
+t.onkeydown=e=>{if(e.key==='Enter')answer(t.value)};
+document.getElementById('cam').onclick=()=>f.click();
+f.onchange=()=>{
+ const files=[...f.files].filter(x=>x.type.startsWith('image/'));if(!files.length)return;
+ const w=document.createElement('div');w.className='thumbs';
+ files.forEach(x=>{D.photos.push(x);const im=document.createElement('img');im.alt='Uploaded photo';im.src=URL.createObjectURL(x);w.appendChild(im)});
+ log.appendChild(w);log.scrollTop=log.scrollHeight;f.value='';
+ if(steps[i]&&steps[i].k!=='photos'){add("Got your photos — I'll keep them with your report. Let's carry on.",'bot')}
+ else if(!chipsEl){ask_chips()}
+};
+function ask_chips(){const s=steps[i];if(!s||s.k!=='photos')return;chipsEl=document.createElement('div');chipsEl.className='chips';['Done'].forEach(o=>{const b=document.createElement('button');b.className='chip';b.textContent=o;b.onclick=()=>answer(o);chipsEl.appendChild(b)});log.appendChild(chipsEl);log.scrollTop=log.scrollHeight}
+ask();
+</script></body></html>
